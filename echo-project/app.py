@@ -94,10 +94,9 @@ class LLMEchoAnalyzer:
         self.url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 
     def clean_text(self, text):
-        """清理和预处理文本数据"""
         text = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9\s\.\!\?\,\;\:\"\'()（）。！？，；：""'']', '', text)
-        text = re.sub(r'\s+', ' ', text.strip())
-        comments = [line.strip() for line in text.split('\n') if line.strip() and len(line) > 3]
+    # 使用 .splitlines() 替代 .split('\n')，更健壮地处理多行文本
+        comments = [line.strip() for line in text.splitlines() if line.strip() and len(line) > 3]
         return comments
 
     def analyze(self, comments):
@@ -677,7 +676,8 @@ APP启动速度有点慢，希望能优化
             )
         
         with col2:
-            # CSV详细数据下载
+    # CSV详细数据下载
+    # 将 encoding 修改为 'utf-8-sig' 来加入BOM，解决Excel乱码问题
             csv_data = df_detailed.to_csv(index=False, encoding='utf-8-sig')
             st.download_button(
                 label="📊 下载CSV详细数据",
