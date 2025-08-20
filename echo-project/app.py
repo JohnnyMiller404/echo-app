@@ -1,4 +1,5 @@
 import os
+import matplotlib
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
@@ -13,6 +14,17 @@ import io
 import requests
 from datetime import datetime
 import time
+
+try:
+    # 构建字体文件的正确路径
+    font_path = os.path.join('echo-project', 'fonts', 'font.otf') 
+    # 设置matplotlib的字体管理器
+    matplotlib.font_manager.fontManager.addfont(font_path)
+    # 设置全局字体，这样所有图表的中文都会正常显示
+    plt.rcParams['font.family'] = 'Source Han Sans SC' # 这里的名字需要和字体文件名或字体属性匹配
+    plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示为方块的问题
+except Exception as e:
+    st.warning(f"中文字体加载失败，图表标题可能显示为方框。错误: {e}")
 
 # 页面配置
 st.set_page_config(
