@@ -13,17 +13,7 @@ import io
 import requests
 from datetime import datetime
 import time
-st.info(f"💡 当前工作目录: {os.getcwd()}")
-try:
-    st.info(f"💡 根目录内容: {os.listdir('.')}")
-    st.info(f"💡 fonts目录内容: {os.listdir('fonts')}")
-    font_path_to_check = os.path.join('fonts', 'font.otf')
-    if os.path.exists(font_path_to_check):
-        st.success("✅ 恭喜！字体文件路径正确，文件已找到！")
-    else:
-        st.error("❌ 错误！在当前路径下未找到 'fonts/font.otf' 文件。")
-except FileNotFoundError:
-    st.error("❌ 错误！连 'fonts' 文件夹都找不到，请检查GitHub仓库中的文件夹名称是否正确。")
+
 # 页面配置
 st.set_page_config(
     page_title="用户之声回音壁 (Echo) Pro",
@@ -702,7 +692,7 @@ APP启动速度有点慢，希望能优化
                 if keywords_dict:
                     try:
                         plt.figure(figsize=(12, 6))
-                        font_path = os.path.join('fonts', 'font.otf')
+                        font_path = os.path.join('echo-project', 'fonts', 'font.otf')
                         wordcloud = WordCloud(
                             font_path=font_path,
                             width=1000, 
