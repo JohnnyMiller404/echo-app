@@ -543,7 +543,7 @@ APP启动速度有点慢，希望能优化
                         plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=200, facecolor='white')
                         img_buffer.seek(0)
                         
-                        st.image(img_buffer, use_column_width=True)
+                        st.image(img_buffer, use_container_width=True)
                         plt.close()
                     except Exception as e:
                         st.warning("⚠️ 词云图生成失败，可能是字体问题。显示关键词列表作为替代。")
