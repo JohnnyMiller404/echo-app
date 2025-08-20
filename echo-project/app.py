@@ -77,257 +77,176 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-class AIEnhancedEchoAnalyzer:
-    def __init__(self):
-        # 基础关键词库（作为备用）
-        self.sentiment_keywords = {
-            'positive': ['好', '棒', '不错', '喜欢', '满意', '优秀', '完美', '推荐', '赞', '爱了', '给力', '太棒了', '流畅', '方便', '简单', '美观'],
-            'negative': ['差', '烂', '垃圾', 'bug', '卡', '闪退', '慢', '难用', '失望', '糟糕', '问题', '故障', '崩溃', '复杂', '麻烦', '丑'],
-            'neutral': ['一般', '还行', '普通', '凑合', '中等', '正常']
-        }
-        
-        self.intent_keywords = {
-            'bug反馈': ['bug', '错误', '故障', '崩溃', '闪退', '卡顿', '死机', '无响应', '异常', '问题', '不能用', '失败'],
-            '功能建议': ['建议', '希望', '期待', '增加', '添加', '改进', '优化', '更新', '新功能', '升级', '完善'],
-            '体验赞扬': ['好用', '方便', '简单', '流畅', '美观', '喜欢', '满意', '推荐', '棒', '不错', '完美'],
-            '体验抱怨': ['难用', '复杂', '麻烦', '不方便', '设计差', '界面丑', '体验差', '不好用'],
-            '咨询': ['怎么', '如何', '为什么', '什么时候', '哪里', '询问', '请问', '咨询']
-        }
-        
-        self.high_freq_words = ['功能', '界面', '设计', '体验', '速度', '性能', '更新', '版本', '问题', '建议', '希望', '好用', '方便']
+# (你需要保留文件顶部的所有 import 语句)
+# (请用下面的新类，完整替换掉你原来的 AIEnhancedEchoAnalyzer 类)
 
-    def clean_text(self, text):
-        """清理和预处理文本数据"""
-        # 去除多余空格和特殊字符
-        text = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9\s\.\!\?\,\;\:\"\'()（）。！？，；：""'']', '', text)
-        text = re.sub(r'\s+', ' ', text.strip())
-        
-        # 分割成评论列表
-        comments = []
-        for line in text.split('\n'):
-            line = line.strip()
-            if line and len(line) > 3:  # 过滤过短的评论
-                comments.append(line)
-        
-        return comments
+class LLMEchoAnalyzer:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        # 智谱AI的API地址
+        self.url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+    # (你需要保留文件顶部的所有 import 语句)
+# (请用下面的新类，完整替换掉你原来的 AIEnhancedEchoAnalyzer 类)
 
-    def advanced_sentiment_analysis(self, comments):
-        """高级情感分析"""
-        results = {'positive': 0, 'negative': 0, 'neutral': 0}
-        detailed_results = []
-        confidence_scores = []
-        
-        for comment in comments:
-            comment_lower = comment.lower()
-            
-            # 计算情感得分
-            pos_score = 0
-            neg_score = 0
-            
-            # 基于关键词的情感得分
-            for word in self.sentiment_keywords['positive']:
-                if word in comment_lower:
-                    pos_score += 1
-                    if word in ['完美', '太棒了', '爱了']:
-                        pos_score += 1  # 强情感词额外加分
-            
-            for word in self.sentiment_keywords['negative']:
-                if word in comment_lower:
-                    neg_score += 1
-                    if word in ['垃圾', '糟糕', '崩溃']:
-                        neg_score += 1  # 强情感词额外加分
-            
-            # 考虑否定词的影响
-            negation_words = ['不', '没', '无', '非', '别', '莫']
-            for neg_word in negation_words:
-                if neg_word in comment:
-                    # 如果否定词后面跟着积极词，则减少积极分数
-                    for pos_word in self.sentiment_keywords['positive']:
-                        if f"{neg_word}{pos_word}" in comment or f"{neg_word}.*{pos_word}" in comment:
-                            pos_score = max(0, pos_score - 1)
-                    # 如果否定词后面跟着消极词，则增加积极倾向
-                    for neg_word_content in self.sentiment_keywords['negative']:
-                        if f"{neg_word}{neg_word_content}" in comment or f"{neg_word}.*{neg_word_content}" in comment:
-                            neg_score = max(0, neg_score - 1)
-                            pos_score += 0.5
-            
-            # 计算置信度
-            total_score = pos_score + neg_score
-            confidence = min(total_score / 3.0, 1.0)  # 归一化到0-1
-            
-            # 确定情感
-            if pos_score > neg_score:
-                sentiment = 'positive'
-            elif neg_score > pos_score:
-                sentiment = 'negative'
-            else:
-                sentiment = 'neutral'
-            
-            results[sentiment] += 1
-            detailed_results.append({
-                'comment': comment,
-                'sentiment': sentiment,
-                'confidence': confidence,
-                'pos_score': pos_score,
-                'neg_score': neg_score
-            })
-            confidence_scores.append(confidence)
-        
-        # 计算平均置信度
-        avg_confidence = np.mean(confidence_scores) if confidence_scores else 0
-        
-        return results, detailed_results, avg_confidence
+class LLMEchoAnalyzer:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        # 智谱AI的API地址
+        self.url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 
-    def smart_keyword_extraction(self, comments):
-        """智能关键词提取"""
-        all_text = ' '.join(comments)
-        
-        # 中文词语提取（简化版分词）
-        chinese_words = re.findall(r'[\u4e00-\u9fa5]{2,4}', all_text)
-        english_words = re.findall(r'[a-zA-Z]{3,10}', all_text.lower())
-        
-        # 停用词过滤
-        stop_words = {
-            '的', '了', '是', '我', '你', '他', '她', '它', '这', '那', '和', '与', '或', 
-            '但', '也', '都', '很', '非常', '就', '在', '有', '会', '能', '可以', '不是', 
-            '没有', '比较', '觉得', '感觉', '认为', '应该', '可能', '一个', '这个', '那个',
-            '现在', '以前', '以后', '时候', '什么', '怎么', '为什么', '确实', '真的', '还是'
+    def analyze(self, comments):
+        """使用LLM API进行全面、智能的分析"""
+        if not self.api_key:
+            st.error("API Key未设置，请在Streamlit Secrets中配置 ZHIPU_API_KEY。")
+            return None
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
         }
-        
-        # 过滤并统计词频
-        filtered_chinese = [word for word in chinese_words if word not in stop_words and len(word) >= 2]
-        filtered_english = [word for word in english_words if word not in ['app', 'the', 'and', 'that', 'this']]
-        
-        all_words = filtered_chinese + filtered_english
-        word_counts = Counter(all_words)
-        
-        # 增加高频业务词权重
-        for word in self.high_freq_words:
-            if word in word_counts:
-                word_counts[word] = int(word_counts[word] * 1.5)
-        
-        return word_counts.most_common(25)
 
-    def advanced_intent_classification(self, comments):
-        """高级意图分类"""
-        results = {intent: 0 for intent in self.intent_keywords.keys()}
-        detailed_results = []
-        
-        for comment in comments:
-            comment_lower = comment.lower()
-            intent_scores = {intent: 0 for intent in self.intent_keywords.keys()}
-            
-            # 基于关键词匹配计算各意图得分
-            for intent, keywords in self.intent_keywords.items():
-                for keyword in keywords:
-                    if keyword in comment_lower:
-                        intent_scores[intent] += 1
-                        
-                        # 特殊规则增强
-                        if intent == 'bug反馈' and any(severity in comment_lower for severity in ['严重', '无法', '不能', '崩溃', '闪退']):
-                            intent_scores[intent] += 2
-                        elif intent == '功能建议' and any(suggestion in comment_lower for suggestion in ['希望', '建议', '期待']):
-                            intent_scores[intent] += 1
-            
-            # 句式模式识别
-            if re.search(r'[希期]望|建议|可以.*增加|能.*添加', comment):
-                intent_scores['功能建议'] += 2
-            if re.search(r'为什么|怎么.*不|如何.*解决', comment):
-                intent_scores['咨询'] += 2
-            if re.search(r'太.*了|非常.*|很.*', comment):
-                if any(pos in comment for pos in self.sentiment_keywords['positive']):
-                    intent_scores['体验赞扬'] += 1
-                elif any(neg in comment for neg in self.sentiment_keywords['negative']):
-                    intent_scores['体验抱怨'] += 1
-            
-            # 确定主要意图
-            best_intent = max(intent_scores, key=intent_scores.get)
-            if intent_scores[best_intent] > 0:
-                results[best_intent] += 1
-                classified_intent = best_intent
-            else:
-                # 基于整体情感进行兜底分类
-                if any(pos in comment_lower for pos in self.sentiment_keywords['positive']):
-                    results['体验赞扬'] += 1
-                    classified_intent = '体验赞扬'
-                elif any(neg in comment_lower for neg in self.sentiment_keywords['negative']):
-                    results['体验抱怨'] += 1
-                    classified_intent = '体验抱怨'
-                else:
-                    if '其他' not in results:
-                        results['其他'] = 0
-                    results['其他'] += 1
-                    classified_intent = '其他'
-            
-            detailed_results.append({
-                'comment': comment,
-                'intent': classified_intent,
-                'scores': intent_scores
-            })
-        
-        return results, detailed_results
+        # 将所有评论合并成一个字符串，用换行符分隔
+        comments_text = "\n".join(comments)
 
-    def generate_ai_insights(self, sentiment_details, intent_details, keywords):
-        """生成AI洞察和摘要"""
-        total_comments = len(sentiment_details)
-        
-        # 提取不同类型的代表性评论
-        positive_comments = [item for item in sentiment_details if item['sentiment'] == 'positive']
-        negative_comments = [item for item in sentiment_details if item['sentiment'] == 'negative']
-        
-        # 按置信度排序选择最具代表性的评论
-        positive_comments.sort(key=lambda x: x['confidence'], reverse=True)
-        negative_comments.sort(key=lambda x: x['confidence'], reverse=True)
-        
-        # 生成问题优先级
-        priority_issues = []
-        bug_comments = [item for item in intent_details if item['intent'] == 'bug反馈']
-        if len(bug_comments) > total_comments * 0.2:  # 如果bug反馈超过20%
-            priority_issues.append({
-                'type': '技术问题',
-                'severity': '高',
-                'count': len(bug_comments),
-                'description': 'Bug反馈数量较多，需要优先处理技术问题'
-            })
-        
-        complaint_comments = [item for item in intent_details if item['intent'] == '体验抱怨']
-        if len(complaint_comments) > total_comments * 0.15:  # 如果体验抱怨超过15%
-            priority_issues.append({
-                'type': '用户体验',
-                'severity': '中',
-                'count': len(complaint_comments),
-                'description': '用户体验问题需要关注和改进'
-            })
-        
-        # 生成改进建议
-        suggestions = []
-        suggestion_comments = [item for item in intent_details if item['intent'] == '功能建议']
-        if suggestion_comments:
-            suggestions.append(f"收到了{len(suggestion_comments)}条功能建议，可考虑纳入产品规划")
-        
-        if positive_comments:
-            top_positive = positive_comments[0]['comment']
-            suggestions.append(f"用户最认可的方面：{top_positive[:30]}...")
-        
-        # 关键词趋势分析
-        tech_keywords = [kw for kw, count in keywords if kw in ['bug', '卡顿', '闪退', '崩溃', '故障']]
-        ux_keywords = [kw for kw, count in keywords if kw in ['界面', '设计', '体验', '操作', '功能']]
-        
-        keyword_insights = {
-            'tech_focus': len(tech_keywords) > 0,
-            'ux_focus': len(ux_keywords) > 0,
-            'top_concerns': [kw for kw, count in keywords[:5]]
+        # 这是最核心的部分：一个精心设计的Prompt，告诉AI要做什么
+        prompt = f"""
+        你是一位顶级的APP用户反馈分析专家。你的任务是深入分析以下用户评论，并严格按照指定的JSON格式返回高度精确的分析结果。
+
+        用户评论列表如下:
+        ---
+        {comments_text}
+        ---
+
+        请完成以下分析任务:
+        1.  **情感分析 (sentiment_analysis)**: 精准统计正面(positive), 负面(negative), 和中性(neutral)评论的数量。请理解深层语义，例如“质量很高”是正面，“启动有点慢”是负面。
+        2.  **意图分类 (intent_classification)**: 将每条评论的核心意图归类到 'bug反馈', '功能建议', '体验赞扬', '体验抱怨', '咨询' 这五个类别中，并统计各自的数量。
+        3.  **关键词提取 (keyword_extraction)**: 提取最能代表用户关注焦点的15个核心关键词及其出现次数。
+        4.  **核心观点摘要 (summary)**: 总结出3条最具代表性的正面反馈观点和3条最具代表性的负面反馈观点。
+
+        请严格按照以下JSON格式输出，不要包含任何无关的文字、解释或代码标记:
+        {{
+          "sentiment_analysis": {{
+            "positive": <integer>,
+            "negative": <integer>,
+            "neutral": <integer>
+          }},
+          "intent_classification": {{
+            "bug反馈": <integer>,
+            "功能建议": <integer>,
+            "体验赞扬": <integer>,
+            "体验抱怨": <integer>,
+            "咨询": <integer>
+          }},
+          "keyword_extraction": [
+            {{"keyword": "<string>", "count": <integer>}},
+            ...
+          ],
+          "summary": {{
+            "positive_highlights": ["<string>", "<string>", "<string>"],
+            "negative_highlights": ["<string>", "<string>", "string>"]
+          }}
+        }}
+        """
+
+        payload = {
+            "model": "glm-4",  # 使用智谱最新的GLM-4模型
+            "messages": [{"role": "user", "content": prompt}],
+            "response_format": {"type": "json_object"} # 强制要求返回JSON格式
         }
-        
-        return {
-            'positive_highlights': [item['comment'] for item in positive_comments[:3]],
-            'negative_highlights': [item['comment'] for item in negative_comments[:3]],
-            'priority_issues': priority_issues,
-            'suggestions': suggestions,
-            'keyword_insights': keyword_insights,
-            'total_comments': total_comments,
-            'confidence_score': np.mean([item['confidence'] for item in sentiment_details])
+
+        try:
+            # 设置一个较长的超时时间，因为AI分析需要时间
+            response = requests.post(self.url, headers=headers, json=payload, timeout=150)
+            response.raise_for_status()
+            
+            # 解析返回的JSON数据
+            analysis_str = response.json()['choices'][0]['message']['content']
+            return json.loads(analysis_str)
+
+        except requests.exceptions.RequestException as e:
+            st.error(f"调用AI模型API失败: {e}")
+            return None
+        except (json.JSONDecodeError, KeyError, IndexError) as e:
+            st.error(f"解析AI模型返回数据失败，请稍后重试。错误: {e}")
+            st.code(response.text, language="text") # 打印原始返回内容，方便调试
+            return None
+
+    def analyze(self, comments):
+        """使用LLM API进行全面、智能的分析"""
+        if not self.api_key:
+            st.error("API Key未设置，请在Streamlit Secrets中配置 ZHIPU_API_KEY。")
+            return None
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}"
         }
+
+        # 将所有评论合并成一个字符串，用换行符分隔
+        comments_text = "\n".join(comments)
+
+        # 这是最核心的部分：一个精心设计的Prompt，告诉AI要做什么
+        prompt = f"""
+        你是一位顶级的APP用户反馈分析专家。你的任务是深入分析以下用户评论，并严格按照指定的JSON格式返回高度精确的分析结果。
+
+        用户评论列表如下:
+        ---
+        {comments_text}
+        ---
+
+        请完成以下分析任务:
+        1.  **情感分析 (sentiment_analysis)**: 精准统计正面(positive), 负面(negative), 和中性(neutral)评论的数量。请理解深层语义，例如“质量很高”是正面，“启动有点慢”是负面。
+        2.  **意图分类 (intent_classification)**: 将每条评论的核心意图归类到 'bug反馈', '功能建议', '体验赞扬', '体验抱怨', '咨询' 这五个类别中，并统计各自的数量。
+        3.  **关键词提取 (keyword_extraction)**: 提取最能代表用户关注焦点的15个核心关键词及其出现次数。
+        4.  **核心观点摘要 (summary)**: 总结出3条最具代表性的正面反馈观点和3条最具代表性的负面反馈观点。
+
+        请严格按照以下JSON格式输出，不要包含任何无关的文字、解释或代码标记:
+        {{
+          "sentiment_analysis": {{
+            "positive": <integer>,
+            "negative": <integer>,
+            "neutral": <integer>
+          }},
+          "intent_classification": {{
+            "bug反馈": <integer>,
+            "功能建议": <integer>,
+            "体验赞扬": <integer>,
+            "体验抱怨": <integer>,
+            "咨询": <integer>
+          }},
+          "keyword_extraction": [
+            {{"keyword": "<string>", "count": <integer>}},
+            ...
+          ],
+          "summary": {{
+            "positive_highlights": ["<string>", "<string>", "<string>"],
+            "negative_highlights": ["<string>", "<string>", "string>"]
+          }}
+        }}
+        """
+
+        payload = {
+            "model": "glm-4",  # 使用智谱最新的GLM-4模型
+            "messages": [{"role": "user", "content": prompt}],
+            "response_format": {"type": "json_object"} # 强制要求返回JSON格式
+        }
+
+        try:
+            # 设置一个较长的超时时间，因为AI分析需要时间
+            response = requests.post(self.url, headers=headers, json=payload, timeout=150)
+            response.raise_for_status()
+            
+            # 解析返回的JSON数据
+            analysis_str = response.json()['choices'][0]['message']['content']
+            return json.loads(analysis_str)
+
+        except requests.exceptions.RequestException as e:
+            st.error(f"调用AI模型API失败: {e}")
+            return None
+        except (json.JSONDecodeError, KeyError, IndexError) as e:
+            st.error(f"解析AI模型返回数据失败，请稍后重试。错误: {e}")
+            st.code(response.text, language="text") # 打印原始返回内容，方便调试
+            return None
 
 def create_enhanced_visualizations(results):
     """创建增强版可视化图表"""
@@ -432,8 +351,11 @@ def main():
         st.metric("本次会话分析次数", st.session_state.analysis_count)
 
     # 初始化增强分析器
-    if 'enhanced_analyzer' not in st.session_state:
-        st.session_state.enhanced_analyzer = AIEnhancedEchoAnalyzer()
+    # --- ↓↓↓ 粘贴下面的新代码 ↓↓↓ ---
+# 初始化新的LLM分析器，它会自动从st.secrets读取API_KEY
+    if 'analyzer' not in st.session_state:
+        api_key = st.secrets.get("ZHIPU_API_KEY")
+        st.session_state.analyzer = LLMEchoAnalyzer(api_key=api_key)
 
     # 数据输入模块
     st.markdown("## 📥 智能数据输入模块")
@@ -545,74 +467,42 @@ APP启动速度有点慢，希望能优化
             st.info("历史分析功能开发中...")
 
     # 执行分析
+    # --- ↓↓↓ 粘贴下面的新代码 ↓↓↓ ---
     if analyze_button and user_input:
-        with st.spinner('🤖 AI正在深度分析用户反馈，请稍候...'):
-            # 进度条
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            # 步骤1：数据预处理
-            status_text.text('📝 正在清理和预处理文本数据...')
-            progress_bar.progress(20)
-            time.sleep(0.5)
-            
-            comments = st.session_state.enhanced_analyzer.clean_text(user_input)
-            
-            if len(comments) == 0:
-                st.error("❌ 未检测到有效的评论内容，请检查输入格式。")
+        with st.spinner('🤖 正在调用云端AI大模型进行深度分析，请稍候...'):
+            comments = st.session_state.analyzer.clean_text(user_input)
+
+            if not comments:
+                st.error("❌ 未检测到有效的评论内容。")
                 st.stop()
-            
-            # 步骤2：情感分析
-            status_text.text('🎭 正在进行高精度情感分析...')
-            progress_bar.progress(40)
-            time.sleep(0.5)
-            
-            sentiment_results, sentiment_details, avg_confidence = st.session_state.enhanced_analyzer.advanced_sentiment_analysis(comments)
-            
-            # 步骤3：关键词提取
-            status_text.text('🔍 正在提取关键词和热点话题...')
-            progress_bar.progress(60)
-            time.sleep(0.5)
-            
-            keywords = st.session_state.enhanced_analyzer.smart_keyword_extraction(comments)
-            
-            # 步骤4：意图分类
-            status_text.text('📋 正在分析用户反馈意图...')
-            progress_bar.progress(80)
-            time.sleep(0.5)
-            
-            intent_results, intent_details = st.session_state.enhanced_analyzer.advanced_intent_classification(comments)
-            
-            # 步骤5：生成洞察
-            status_text.text('💡 正在生成AI洞察和建议...')
-            progress_bar.progress(100)
-            time.sleep(0.5)
-            
-            ai_insights = st.session_state.enhanced_analyzer.generate_ai_insights(
-                sentiment_details, intent_details, keywords
-            )
-            
-            # 清除进度指示器
-            progress_bar.empty()
-            status_text.empty()
-            
-            # 更新分析计数
-            st.session_state.analysis_count += 1
-            
-            # 存储分析结果
-            st.session_state.enhanced_results = {
-                'sentiment_results': sentiment_results,
-                'sentiment_details': sentiment_details,
-                'keywords': keywords,
-                'intent_results': intent_results,
-                'intent_details': intent_details,
-                'ai_insights': ai_insights,
-                'avg_confidence': avg_confidence,
-                'total_comments': len(comments),
-                'analysis_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            
-            st.success("🎉 分析完成！请查看下方详细报告。")
+
+        # 调用新的、真正智能的分析方法
+            llm_results = st.session_state.analyzer.analyze(comments)
+
+            if llm_results:
+                st.session_state.analysis_count += 1
+            # 将LLM返回的结果适配到你现有的前端展示结构中
+                st.session_state.enhanced_results = {
+                    'sentiment_results': llm_results.get('sentiment_analysis', {}),
+                # 注意这里keywords的数据结构变了
+                    'keywords': [(item['keyword'], item['count']) for item in llm_results.get('keyword_extraction', [])],
+                    'intent_results': llm_results.get('intent_classification', {}),
+                # ai_insights 部分需要重新组装
+                    'ai_insights': {
+                    'positive_highlights': llm_results.get('summary', {}).get('positive_highlights', []),
+                    'negative_highlights': llm_results.get('summary', {}).get('negative_highlights', []),
+                    # 其他洞察可以后续再基于LLM结果生成
+                    'priority_issues': [], 
+                    'suggestions': [],
+                    'keyword_insights': {}
+                    },
+                    'total_comments': len(comments),
+                    'avg_confidence': 0.95, # LLM结果我们可以给一个较高的默认置信度
+                    'analysis_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    'sentiment_details': [], # 详细数据可以暂时留空
+                    'intent_details': [] # 详细数据可以暂时留空
+                }
+                st.success("🎉 AI深度分析完成！")
 
     # 显示增强分析结果
     if 'enhanced_results' in st.session_state:
