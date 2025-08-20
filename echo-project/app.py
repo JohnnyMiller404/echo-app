@@ -702,7 +702,6 @@ APP启动速度有点慢，希望能优化
                             max_words=30,
                             relative_scaling=0.5,
                             collocations=False,
-                            font_path=None,  # 使用系统默认字体
                             prefer_horizontal=0.7
                         ).generate_from_frequencies(keywords_dict)
                         
