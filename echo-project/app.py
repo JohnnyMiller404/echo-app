@@ -94,6 +94,20 @@ class LLMEchoAnalyzer:
         # 智谱AI的API地址
         self.url = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 
+    def clean_text(self, text):
+    # 去除多余空格和特殊字符
+        text = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9\s\.\!\?\,\;\:\"\'()（）。！？，；：""'']', '', text)
+        text = re.sub(r'\s+', ' ', text.strip())
+    
+    # 分割成评论列表
+        comments = []
+        for line in text.split('\n'):
+            line = line.strip()
+            if line and len(line) > 3:  # 过滤过短的评论
+                comments.append(line)
+    
+        return comments
+
     def analyze(self, comments):
         """使用LLM API进行全面、智能的分析"""
         if not self.api_key:
