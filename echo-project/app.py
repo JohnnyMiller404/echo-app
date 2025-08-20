@@ -1,5 +1,4 @@
 import os
-import matplotlib
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
@@ -14,17 +13,17 @@ import io
 import requests
 from datetime import datetime
 import time
+from matplotlib.font_manager import FontProperties
 
+# 定义字体属性，以便后续精准调用
 try:
-    # 构建字体文件的正确路径
-    font_path = os.path.join('echo-project', 'fonts', 'font.otf') 
-    # 设置matplotlib的字体管理器
-    matplotlib.font_manager.fontManager.addfont(font_path)
-    # 设置全局字体，这样所有图表的中文都会正常显示
-    plt.rcParams['font.family'] = 'Source Han Sans SC' # 这里的名字需要和字体文件名或字体属性匹配
-    plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示为方块的问题
+    font_path = os.path.join('echo-project', 'fonts', 'font.otf')
+    # 创建一个字体属性对象
+    my_font = FontProperties(fname=font_path)
 except Exception as e:
-    st.warning(f"中文字体加载失败，图表标题可能显示为方框。错误: {e}")
+    st.warning("字体文件加载失败，图表标题可能无法正常显示中文。")
+    my_font = None # 如果失败，创建一个空对象
+# =============================================
 
 # 页面配置
 st.set_page_config(
@@ -549,7 +548,11 @@ APP启动速度有点慢，希望能优化
                         
                         plt.imshow(wordcloud, interpolation='bilinear')
                         plt.axis('off')
-                        plt.title('用户关注热点词云图', fontsize=16, pad=20)
+                        # 如果 my_font 成功加载，就用它来显示标题
+                        if my_font:
+                            plt.title('用户关注热点词云图', fontproperties=my_font, fontsize=16, pad=20)
+                        else:
+                            plt.title('Word Cloud Title', fontsize=16, pad=20) # 备用英文标题
                         
                         img_buffer = io.BytesIO()
                         plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=200, facecolor='white')
