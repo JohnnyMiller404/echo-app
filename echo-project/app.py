@@ -950,6 +950,9 @@ Echo AI分析报告摘要
             df_detailed['长度分组'] = length_bins
             
             length_sentiment = df_detailed.groupby(['长度分组', '情感倾向']).size().unstack(fill_value=0)
+            all_sentiment_columns = ['positive', 'negative', 'neutral']
+# 2. 使用 reindex 方法，补全缺失的列，并用 0 填充
+            length_sentiment = length_sentiment.reindex(columns=all_sentiment_columns, fill_value=0)
             
             fig_trend = px.bar(
                 x=length_sentiment.index,
