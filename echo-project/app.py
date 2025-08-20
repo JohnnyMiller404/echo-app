@@ -333,9 +333,16 @@ def create_enhanced_visualizations(results):
     """创建增强版可视化图表"""
     
     # 1. 情感分布带置信度的饼图
+    sentiment_values = list(results['sentiment_results'].values())
+    sentiment_labels = ['正面评价', '负面评价', '中性评价']
+    
+    # 确保有有效数据
+    if sum(sentiment_values) == 0:
+        sentiment_values = [1, 0, 0]  # 默认值避免空图表
+    
     sentiment_fig = go.Figure(data=[go.Pie(
-        labels=['正面评价', '负面评价', '中性评价'],
-        values=list(results['sentiment_results'].values()),
+        labels=sentiment_labels,
+        values=sentiment_values,
         hole=0.4,
         marker_colors=['#28a745', '#dc3545', '#ffc107'],
         textinfo='label+percent+value',
@@ -355,19 +362,21 @@ def create_enhanced_visualizations(results):
         legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.01)
     )
     
-    # 2. 意图分类瀑布图
+    # 2. 意图分类条形图（替换瀑布图避免兼容性问题）
     intent_data = {k: v for k, v in results['intent_results'].items() if v > 0}
-    intent_fig = go.Figure(go.Waterfall(
-        name="意图分类",
-        orientation="v",
-        measure=["relative"] * len(intent_data),
+    
+    # 确保有有效数据
+    if not intent_data:
+        intent_data = {'其他': 1}  # 默认值避免空图表
+    
+    # 使用条形图替代瀑布图
+    intent_fig = go.Figure(data=[go.Bar(
         x=list(intent_data.keys()),
         y=list(intent_data.values()),
-        connector={"line": {"color": "rgb(63, 63, 63)"}},
-        marker={"color": ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"][:len(intent_data)]},
-        textposition="outside",
-        text=[f"{v}条" for v in intent_data.values()]
-    ))
+        marker_color=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'][:len(intent_data)],
+        text=[f"{v}条" for v in intent_data.values()],
+        textposition='auto'
+    )])
     
     intent_fig.update_layout(
         title={
@@ -378,7 +387,8 @@ def create_enhanced_visualizations(results):
         },
         xaxis_title="反馈类型",
         yaxis_title="评论数量",
-        showlegend=False
+        showlegend=False,
+        xaxis=dict(tickangle=45)  # 倾斜标签避免重叠
     )
     
     return sentiment_fig, intent_fig
@@ -680,34 +690,42 @@ APP启动速度有点慢，希望能优化
                 # 生成词云
                 keywords_dict = dict(results['keywords'])
                 if keywords_dict:
-                    plt.figure(figsize=(12, 6))
-                    font_path = os.path.join('fonts', 'font.otf')
-                    wordcloud = WordCloud(
-                        font_path=font_path,
-                        width=1000, 
-                        height=500,
-                        background_color='white',
-                        colormap='plasma',
-                        max_words=30,
-                        relative_scaling=0.5,
-                        collocations=False
-                    ).generate_from_frequencies(keywords_dict)
-                    
-                    plt.imshow(wordcloud, interpolation='bilinear')
-                    plt.axis('off')
-                    plt.title('用户关注热点词云图', fontsize=16, pad=20)
-                    
-                    img_buffer = io.BytesIO()
-                    plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=200, facecolor='white')
-                    img_buffer.seek(0)
-                    
-                    st.image(img_buffer, use_column_width=True)
-                    plt.close()
+                    try:
+                        plt.figure(figsize=(12, 6))
+                        font_path = os.path.join('fonts', 'font.otf')
+                        wordcloud = WordCloud(
+                            font_path=font_path,
+                            width=1000, 
+                            height=500,
+                            background_color='white',
+                            colormap='plasma',
+                            max_words=30,
+                            relative_scaling=0.5,
+                            collocations=False,
+                            font_path=None,  # 使用系统默认字体
+                            prefer_horizontal=0.7
+                        ).generate_from_frequencies(keywords_dict)
+                        
+                        plt.imshow(wordcloud, interpolation='bilinear')
+                        plt.axis('off')
+                        plt.title('用户关注热点词云图', fontsize=16, pad=20)
+                        
+                        img_buffer = io.BytesIO()
+                        plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=200, facecolor='white')
+                        img_buffer.seek(0)
+                        
+                        st.image(img_buffer, use_column_width=True)
+                        plt.close()
+                    except Exception as e:
+                        st.warning("⚠️ 词云图生成失败，可能是字体问题。显示关键词列表作为替代。")
+                        # 备用显示方案
+                        keyword_text = " | ".join([f"{word}({count})" for word, count in results['keywords'][:20]])
+                        st.markdown(f"**关键词**: {keyword_text}")
             
             with col2:
                 st.markdown("#### 🔥 高频关键词排行")
                 for i, (word, count) in enumerate(results['keywords'][:15], 1):
-                    percentage = round(count / results['total_comments'] * 100, 1)
+                    percentage = round(count / results['total_comments'] * 100, 1) if results['total_comments'] > 0 else 0
                     st.markdown(f"""
                     <div style="display: flex; justify-content: space-between; padding: 0.2rem 0; border-bottom: 1px solid #eee;">
                         <span><strong>{i}. {word}</strong></span>
